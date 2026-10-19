@@ -1,0 +1,64 @@
+scalar DateTime
+
+type Poll {
+  id: ID!
+  question: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  choices: [Choice!]!
+  comments: [Comment!]!
+}
+
+type Choice {
+  id: ID!
+  poll: Poll!
+  choiceText: String!
+  votes: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input ChoiceFilter {
+  pollId: ID
+}
+
+input PollFilter {
+  question: String
+}
+
+type PollConnection {
+  nodes: [Poll!]!
+  total: Int!
+  limit: Int!
+  page: Int!
+}
+
+type Author {
+  id: ID!
+  name: String!
+  email: String!
+  comments: [Comment!]!
+}
+
+type Comment {
+  id: ID!
+  poll: Poll!
+  author: Author!
+  content: String!
+  createdAt: DateTime!
+}
+
+type Query {
+  polls(filter: PollFilter, limit: Int = 20, page: Int = 1): PollConnection!
+  choices(filter: ChoiceFilter): [Choice!]!
+  poll(id: ID!): Poll
+  choice(id: ID!): Choice
+  author(id: ID!): Author
+}
+
+type Mutation {
+  createPoll(question: String!, pubDate: DateTime!, authorId: ID!): Poll!
+  createChoice(pollId: ID!, choiceText: String!): Choice!
+  createComment(pollId: ID!, authorId: ID!, content: String!): Comment!
+  createAuthor(name: String!, email: String!): Author!
+}
