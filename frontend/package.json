@@ -1,0 +1,42 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "npm run codegen",
+    "dev": "concurrently -k -n codegen,next -c blue,green \"npm:codegen:watch\" \"next dev -H 0.0.0.0\"",
+    "dev:docker": "concurrently -k -n codegen,next -c blue,green \"npm:codegen:watch\" \"next dev --webpack -H 0.0.0.0\"",
+    "prebuild": "npm run codegen",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0",
+    "lint": "eslint",
+    "codegen": "graphql-codegen --config codegen.ts && node scripts/generate-resources.mjs",
+    "codegen:watch": "node scripts/watch-codegen.mjs"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.3.4",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.5.0",
+    "@mui/material": "^9.5.0",
+    "@mui/material-nextjs": "^9.5.0",
+    "graphql": "^17.0.2",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^7.4.6",
+    "@graphql-codegen/typescript": "^6.1.2",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^10.0.6",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

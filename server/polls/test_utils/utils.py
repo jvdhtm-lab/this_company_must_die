@@ -5,9 +5,12 @@ from django.urls import reverse
 
 
 class GraphQLTestClient:
-    def __init__(self, client=None, url=None):
+    def __init__(self, client=None, url=None, user=None):
         self.client = client or Client()
         self.url = url or reverse("graphql")
+
+        if user is not None:
+            self.client.force_login(user)
 
     def execute(self, query, variables=None):
         response = self.client.post(

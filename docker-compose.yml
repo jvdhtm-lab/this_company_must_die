@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: polls
+      POSTGRES_USER: polls
+      POSTGRES_PASSWORD: polls
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polls -d polls"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py generate_polls && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./server:/app/server
+    ports:
+      - "8010:8000"
+    environment:
+      POSTGRES_DB: polls
+      POSTGRES_USER: polls
+      POSTGRES_PASSWORD: polls
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,web,frontend"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    working_dir: /app
+    command: sh -c "npm run dev:docker"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - ./server:/app/server:ro
+    ports:
+      - "3000:3000"
+    environment:
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      GRAPHQL_SCHEMA_PATH: /app/server/polls/schema.graphql
+      GRAPHQL_URL: http://web:8000/polls/graphql/
+      GRAPHQL_PROXY_TARGET: http://web:8000/polls/graphql/
+      NEXT_PUBLIC_GRAPHQL_URL: /graphql
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  frontend_node_modules:

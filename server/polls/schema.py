@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from datetime import timezone as dt_timezone
 from pathlib import Path
 
@@ -14,9 +14,11 @@ from graphql.language import StringValueNode
 
 from .resolvers import (
     AuthorResolvers,
+    AuthResolvers,
     ChoiceResolvers,
     CommentResolvers,
     PollResolvers,
+    VoteResolvers,
 )
 
 datetime_scalar = ScalarType("DateTime")
@@ -57,18 +59,26 @@ query = QueryType()
 mutation = MutationType()
 
 poll_type = ObjectType("Poll")
+choice_type = ObjectType("Choice")
 author_type = ObjectType("Author")
+comment_type = ObjectType("Comment")
+user_type = ObjectType("User")
 
 PollResolvers(query, mutation)
 ChoiceResolvers(query, mutation, poll_type)
-CommentResolvers(query, mutation, poll_type, author_type)
+VoteResolvers(mutation, poll_type)
+CommentResolvers(query, mutation, poll_type, author_type, comment_type)
 AuthorResolvers(query, mutation)
+AuthResolvers(query, mutation, user_type)
 
 resolvers = [
     query,
     mutation,
     poll_type,
+    choice_type,
     author_type,
+    comment_type,
+    user_type,
     datetime_scalar,
 ]
 
