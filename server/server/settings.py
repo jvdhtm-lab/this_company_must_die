@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,14 +23,31 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-csv9-n$chrtl9=hu2*$12(sy+9-q944^5%k*0nk10a_%!0(sgi'
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    'django-insecure-csv9-n$chrtl9=hu2*$12(sy+9-q944^5%k*0nk10a_%!0(sgi',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
 
 ALLOWED_HOSTS = [
     host for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if host
 ]
+
+render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if render_hostname:
+    ALLOWED_HOSTS.append(render_hostname)
+
+CSRF_TRUSTED_ORIGINS = [
+    origin
+    for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin
+]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 
 # Application definition
@@ -79,7 +98,14 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-if os.environ.get("POSTGRES_DB"):
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=600,
+        )
+    }
+elif os.environ.get("POSTGRES_DB"):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

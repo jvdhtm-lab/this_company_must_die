@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
+const isStaticExport = process.env.STATIC_EXPORT === "1";
+
 const nextConfig: NextConfig = {
+  output: isStaticExport ? "export" : undefined,
+  images: isStaticExport ? { unoptimized: true } : undefined,
   async rewrites() {
+    if (isStaticExport) {
+      return [];
+    }
+
     return [
       {
         source: "/graphql",
@@ -11,8 +19,8 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  cacheComponents: true,
-  partialPrefetching: true,
+  cacheComponents: !isStaticExport,
+  partialPrefetching: !isStaticExport,
   turbopack: {
     rules: {
       "*.css": {
