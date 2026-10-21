@@ -1,0 +1,73 @@
+name: Deploy Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-cloudflare.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'this-company-must-die' }}
+      BACKEND_URL: ${{ vars.BACKEND_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Validate required variables
+        run: |
+          if [ -z "$BACKEND_URL" ]; then
+            echo "::error::Set the repository variable BACKEND_URL to the Render service URL."
+            exit 1
+          fi
+
+      - name: Build static frontend
+        working-directory: frontend
+        run: npm run build:cloudflare
+
+      - name: Add Pages environment binding
+        working-directory: frontend
+        run: printf '\n[vars]\nBACKEND_URL = "%s"\n' "$BACKEND_URL" >> wrangler.toml
+
+      - name: Create Pages project
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: pages project create "${{ env.CLOUDFLARE_PAGES_PROJECT }}" --production-branch=main
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: pages deploy out --project-name "${{ env.CLOUDFLARE_PAGES_PROJECT }}" --branch=main

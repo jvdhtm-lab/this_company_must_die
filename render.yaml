@@ -7,7 +7,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health/
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: DJANGO_DEBUG
         value: "false"
